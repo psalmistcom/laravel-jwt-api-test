@@ -25,18 +25,21 @@ class RegisteredUserController extends Controller
      */
     public function store(StoreRegisteredRequest $request): JsonResponse
     {
-        $request->validated();
         try {
+            $request->validated($request->all());
+
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'password' => Hash::make($request->string('password')),
+                'password' => Hash::make($request->password)
             ]);
 
-            event(new Registered($user));
-            Auth::login($user);
+            if (!$user) {
+                return $this->error('', 'Could not save to the database', 400);
+            }
+
             return $this->success([
-                'user' => new UserResource($user),
+                'user' => $user,
                 'token' => $user->createToken('API token of ' . $user->name)->plainTextToken
             ]);
         } catch (\Throwable $th) {

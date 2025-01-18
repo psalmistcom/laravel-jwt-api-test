@@ -13,7 +13,7 @@ class Post extends Model
         'content',
     ];
 
-    public function user():BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }

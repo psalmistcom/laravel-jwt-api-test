@@ -21,18 +21,23 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): JsonResponse
     {
-        $request->validated($request->all());
-        $data = Auth::attempt($request->only(['email', 'password']));
-        if (!$data) {
-            return $this->error('', 'Credential do not match', 400);
+        try {
+            $request->validated($request->all());
+
+            $data = Auth::attempt($request->only(['email', 'password']));
+            if (!$data) {
+                return $this->error('', 'Credential do not match', 400);
+            }
+
+            $user = User::where('email', $request->email)->first();
+
+            return $this->success([
+                'user' => $user,
+                'token' => $user->createToken('API token of ' . $user->name)->plainTextToken
+            ]);
+        } catch (\Throwable $th) {
+            return $this->error($th, 'Something went wrong from the server', 400);
         }
-
-        $user = User::where('email', $request->email)->first();
-
-        return $this->success([
-            'user' => new UserResource($user),
-            'token' => $user->createToken('API token of ' . $user->name)->plainTextToken
-        ]);
 
         // $request->authenticate();
 
@@ -44,14 +49,19 @@ class AuthenticatedSessionController extends Controller
     /**
      * Destroy an authenticated session.
      */
-    public function destroy(Request $request): Response
+    public function destroy(Request $request): JsonResponse
     {
-        Auth::guard('web')->logout();
+        // Auth::user()->currentAccessToken()->delete();
+        $request->user()->currentAccessToken()->delete();
+        return $this->success([
+            'message' => 'Logged out succesfully'
+        ]);
+        // Auth::guard('web')->logout();
 
-        $request->session()->invalidate();
+        // $request->session()->invalidate();
 
-        $request->session()->regenerateToken();
+        // $request->session()->regenerateToken();
 
-        return response()->noContent();
+        // return response()->noContent();
     }
 }

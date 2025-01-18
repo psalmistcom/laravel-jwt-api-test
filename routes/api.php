@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\PostController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -12,8 +13,10 @@ Route::get('/', function () {
     return ['Laravel' => app()->version()];
 });
 
-Route::prefix('post')->group(function(){
-    Route::apiResource('/post', PostController::class);
-})->middleware(['auth', 'signed', 'throttle:6,1']);
+Route::group(['middleware' => ['auth:sanctum']], function () {
+    Route::apiResource('/posts', PostController::class);
+    Route::get('/user-posts', [PostController::class, 'userPosts']);
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
+});
 
 require __DIR__ . '/auth.php';

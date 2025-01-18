@@ -16,7 +16,10 @@ Route::get('/', function () {
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::apiResource('/posts', PostController::class);
     Route::get('/user-posts', [PostController::class, 'userPosts']);
-    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
+
+    Route::prefix('auth')->group(function () {
+        Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
+    });
 });
 
 require __DIR__ . '/auth.php';

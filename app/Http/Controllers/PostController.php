@@ -21,9 +21,11 @@ class PostController extends Controller
     public function index(): JsonResponse
     {
         $post = Post::query()->orderBy('created_at', 'desc')->paginate();
-        return $this->success([
-            'post' => PostResource::collection($post),
-        ]);
+        return $this->success(
+            PostResource::collection($post),
+            'All Posts fetched succesfully',
+            201
+        );
     }
 
     /**
@@ -32,7 +34,10 @@ class PostController extends Controller
     public function userPosts(): JsonResponse
     {
         $post = Post::where('user_id', Auth::user()->id)->paginate();
-        return $this->success(PostResource::collection($post));
+        if (!empty($post)) {
+            return $this->success(PostResource::collection($post));
+        }
+        return $this->success('You have not created any post');
     }
 
     /**
@@ -60,10 +65,7 @@ class PostController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Post $post)
-    {
-        //
-    }
+    public function show(Post $post) {}
 
     /**
      * Show the form for editing the specified resource.
@@ -76,9 +78,27 @@ class PostController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdatePostRequest $request, Post $post)
+    public function update(UpdatePostRequest $request, Post $post): JsonResponse
     {
-        //
+        try {
+            if (Auth::id() !== $post->user_id) {
+                return $this->error(
+                    '',
+                    'You are not authorized to update other peoples post',
+                    403
+                );
+            }
+
+            $post->update($request->all());
+
+            return $this->success(
+                new PostResource($post),
+                'Post Updated succesfully',
+                201
+            );
+        } catch (\Throwable $th) {
+            return $this->error($th, 'Something went wrong from the server', 400);
+        }
     }
 
     /**
@@ -86,17 +106,24 @@ class PostController extends Controller
      */
     public function destroy(Post $post)
     {
-        //
-    }
+        try {
+            if (Auth::id() !== $post->user_id) {
+                return $this->error(
+                    '',
+                    'You are not authorized to delete other peoples post',
+                    403
+                );
+            }
 
-    private function isNotAuthorized($post)
-    {
-        if (Auth::id() !== $post->user_id) {
-            return $this->error(
+            $post->delete();
+
+            return $this->success(
                 '',
-                'You are not authorized to make this request',
-                403
+                'Post Deleted succesfully',
+                200
             );
+        } catch (\Throwable $th) {
+            return $this->error($th, 'Something went wrong from the server', 400);
         }
     }
 }

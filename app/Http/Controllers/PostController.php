@@ -6,6 +6,7 @@ use App\Models\Post;
 use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
 use App\Http\Resources\PostResource;
+use App\Models\UserLogActivity;
 use App\Traits\HttpResponses;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -52,6 +53,12 @@ class PostController extends Controller
             if (!$post) {
                 return $this->error('', 'Post not saved', 400);
             }
+
+            UserLogActivity::create([
+                'user_id' => Auth::id(),
+                'name' => "You Created a Post",
+            ]);
+
             return $this->success(
                 new PostResource($post),
                 'Post created succesfully',
@@ -91,6 +98,10 @@ class PostController extends Controller
 
             $post->update($request->all());
 
+            UserLogActivity::create([
+                'user_id' => Auth::id(),
+                'name' => "You Updated a Post",
+            ]);
             return $this->success(
                 new PostResource($post),
                 'Post Updated succesfully',
@@ -117,6 +128,10 @@ class PostController extends Controller
 
             $post->delete();
 
+            UserLogActivity::create([
+                'user_id' => Auth::id(),
+                'name' => "You Deleted a Post",
+            ]);
             return $this->success(
                 '',
                 'Post Deleted succesfully',
@@ -125,5 +140,13 @@ class PostController extends Controller
         } catch (\Throwable $th) {
             return $this->error($th, 'Something went wrong from the server', 400);
         }
+    }
+
+    protected function activityLog($name)
+    {
+        UserLogActivity::create([
+            'name' => $name,
+            'user_id' => Auth::id()
+        ]);
     }
 }

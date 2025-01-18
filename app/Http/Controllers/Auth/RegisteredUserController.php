@@ -34,7 +34,7 @@ class RegisteredUserController extends Controller
             ]);
 
             event(new Registered($user));
-
+            Auth::login($user);
             return $this->success([
                 'user' => new UserResource($user),
                 'token' => $user->createToken('API token of ' . $user->name)->plainTextToken

@@ -13,7 +13,9 @@ Route::get('/', function () {
     return ['Laravel' => app()->version()];
 });
 
-Route::group(['middleware' => ['auth:sanctum']], function () {
+Route::group([
+    'middleware' => ['auth:sanctum', 'throttle:3,10']
+], function () {
     Route::apiResource('/posts', PostController::class);
     Route::get('/user-posts', [PostController::class, 'userPosts']);
 
